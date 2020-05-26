@@ -18,7 +18,6 @@ def createWeightMatrix(imagesAsArray):
     n = np.shape(imagesAsArray[0])[0]
     weights = np.zeros((n,n))
     for image in imagesAsArray:
-        image = matrix2array(image)
         t = np.zeros((n,n))
         for i in range(n):
             for j in range(i,n):
@@ -43,18 +42,64 @@ def getFundamentalMemories():
     digits = load_digits()
     fm = [digits.images[0],digits.images[7]]
     for image in fm:
-        for i in range(image.shape[0]):
-            for j in range(image.shape[1]):
-                if image[i,j] == 0:
-                    image[i,j] = -1
-                else:
-                    image[i,j] = 1
+        image = binarizeImage(image)
     return fm
+
+def binarizeImage(image):
+    for i in range(image.shape[0]):
+        for j in range(image.shape[1]):
+            if image[i,j] == 0:
+                image[i,j] = -1
+            else:
+                image[i,j] = 1
+    return image
+def update(weights, y, iterations = 500):
+    isChange = True
+    while(isChange):
+        isChange = False
+        n = np.shape(y)[0]
+        i = np.random.randint(0,n-1)
+        vi = np.dot(weights[i,:],y)
+        yi = activation(vi)
+        if yi != y[i]:
+            isChange = True
+        y[i] = yi
+    return y
+
+def activation(vi):
+    if vi > 0:
+        return 1
+    elif vi < 0:
+        return -1
+    else:
+        return vi
         
 def main():
     memories = getFundamentalMemories()
-    w = createWeightMatrix(memories)
-    print(w)
+    
+    for el in memories:
+        plt.imshow(el)
+        plt.show()
+        
+    m = []
+    for el in memories:
+        m.append(matrix2array(el))
+        
+    w = createWeightMatrix(m)
+        
+    digits = load_digits()
+    for i in range(10,18):
+        im = binarizeImage(digits.images[i])
+        im[6:,:]=-1
+        plt.imshow(im)
+        plt.title("Immagine n."+str(i))
+        plt.show()
+        
+        res = update(w,matrix2array(im))
+        plt.imshow(np.reshape(res,(8,8)))
+        plt.title("Ricostruzione immagine n."+str(i))
+        plt.show()
+
     
 
 main()
