@@ -4,15 +4,16 @@ Created on Mon May 18 19:20:49 2020
 
 @author: utenti
 """
-
 import numpy as np
 from sklearn.datasets import load_digits
 import matplotlib.pyplot as plt
 from PIL import Image
+from skimage import data
+from skimage.transform import resize
 
 
 def matrix2array(matrix):
-    return matrix.flatten()
+    return np.asarray(matrix).flatten()
 
 def createWeightMatrix(imagesAsArray):
     n = np.shape(imagesAsArray[0])[0]
@@ -39,30 +40,32 @@ def gray2binary(image):
     return gray
 
 def getFundamentalMemories():
-    digits = load_digits()
-    fm = [digits.images[0],digits.images[7]]
-    for image in fm:
-        image = binarizeImage(image)
-    return fm
+    fundamentalMemories = [data.coins(), data.camera()]
+    fundamentalMemories_ = []
+    for image in fundamentalMemories:
+        basewidth = 50
+        image = resize(image, (basewidth,basewidth))
+        #print(image)
+        image = binarizeImage(np.asarray(image))
+        fundamentalMemories_.append(image)
+    return fundamentalMemories_
 
 def binarizeImage(image):
-    for i in range(image.shape[0]):
-        for j in range(image.shape[1]):
-            if image[i,j] == 0:
-                image[i,j] = -1
+    _image = np.zeros((image.shape[0],image.shape[1]))
+    for i in range(_image.shape[0]):
+        for j in range(_image.shape[1]):
+            if image[i,j] >= 0.5:
+                _image[i,j] = 1
             else:
-                image[i,j] = 1
-    return image
-def update(weights, y, iterations = 500):
-    isChange = True
-    while(isChange):
-        isChange = False
+                _image[i,j] = -1
+
+    return _image
+def update(weights, y, iterations = 10000):
+    for s in range(iterations):
         n = np.shape(y)[0]
         i = np.random.randint(0,n-1)
         vi = np.dot(weights[i,:],y)
         yi = activation(vi)
-        if yi != y[i]:
-            isChange = True
         y[i] = yi
     return y
 
@@ -76,30 +79,28 @@ def activation(vi):
         
 def main():
     memories = getFundamentalMemories()
-    
-    for el in memories:
-        plt.imshow(el)
+
+    for im in memories:
+        plt.imshow(im)
         plt.show()
-        
+       
     m = []
     for el in memories:
         m.append(matrix2array(el))
         
     w = createWeightMatrix(m)
         
-    digits = load_digits()
-    for i in range(10,18):
-        im = binarizeImage(digits.images[i])
-        im[6:,:]=-1
-        plt.imshow(im)
-        plt.title("Immagine n."+str(i))
+    tests = getFundamentalMemories()
+    for test in tests:
+        test[10:30,10:20] = -1
+        f, axarr = plt.subplots(1,2)
+        axarr[0].imshow(test)
+        #axarr[0].title("Immagine n."+str(i))
+        axarr[1].imshow(np.reshape(update(w,matrix2array(test)),(50,50)))
+        #axarr[1].title("Ricostruzione immagine n."+str(i))
+    
         plt.show()
-        
-        res = update(w,matrix2array(im))
-        plt.imshow(np.reshape(res,(8,8)))
-        plt.title("Ricostruzione immagine n."+str(i))
-        plt.show()
-
+#"""
     
 
 main()
